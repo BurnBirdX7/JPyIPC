@@ -25,15 +25,17 @@ public class TestWithPythonServer {
     public void testExpression() {
         var client = new BasicClient();
 
-        final String DEFAULT_RESPONSE = "garbage";
+        String expr1 = "Expression!!";
+        String expr2 = "Expression again!!";
+        String expr3 = "Expression 3";
 
         assertDoesNotThrow(client::connect);
         assertDoesNotThrow(() ->
-                assertEquals(DEFAULT_RESPONSE, client.sendExpressionMessage("Expression!!").getText()));
+                assertEquals(expr1+expr1, client.sendExpressionMessage(expr1).getText()));
         assertDoesNotThrow(() ->
-                assertEquals(DEFAULT_RESPONSE, client.sendExpressionMessage("Expression again!!").getText()));
+                assertEquals(expr2+expr2, client.sendExpressionMessage(expr2).getText()));
         assertDoesNotThrow(() ->
-                assertEquals(DEFAULT_RESPONSE, client.sendExpressionMessage("Expression 3").getText()));
+                assertEquals(expr3+expr3, client.sendExpressionMessage(expr3).getText()));
         assertDoesNotThrow(client::close);
     }
 

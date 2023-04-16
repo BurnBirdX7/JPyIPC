@@ -1,9 +1,10 @@
 plugins {
-    id("java")
+    id("java-library")
 }
 
-group = "org.example"
-version = "1.0-SNAPSHOT"
+group = "com.lazarev"
+version = "1.0"
+
 
 repositories {
     mavenCentral()

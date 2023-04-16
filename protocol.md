@@ -3,7 +3,7 @@
 
 Python process has to open socket and listen for incoming connections.
 
-**Handshake:**
+## Handshake
 Once connected to the socket, Client sends to the server 4 bytes `J2Py` (ASCII)
 and should receive 4 bytes with values`Py2J`.
 
