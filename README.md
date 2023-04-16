@@ -4,14 +4,15 @@ Implements communication of Java and Python processes via TCP
 
 Protocol described in [protocol.md](protocol.md) file.
 
-To get requests and respond, python process must implement server side,
-example implementation provided in `python-server` directory.
+In order to handle requests and send responses, you need to implement the server-side logic in Python.
+An example implementation can be found in the `python-server` directory.
 
 ## BasicClient
 
-At the moment project provides single thread implementation, but in general,
-if server allows for parallel computations, multi-thread implementation can
-be created with no changes to the protocol 
+Currently, the project offers a single-thread implementation.
+However, it has the potential to leverage parallel computations
+if the server allows for it, enabling the creation of a multi-thread implementation
+without any alterations to the protocol.
 
 ### Construction and Connection
 By default, connects to `127.0.0.1:25565`, but on construction can be provided with different endpoint
@@ -22,11 +23,8 @@ var client = new BasicClient();
 var client = new BasicClient("127.0.0.1", 26676);
 ```
 
-Before any requests are made, connection must be established
-
-```java
-client.connect();
-```
+In order to make any requests, it is necessary to establish a connection by calling the `client.connect()` method.\
+Once this is done, the socket will be opened and the handshake will be executed.
 
 ### MESSAGEs
 
@@ -38,6 +36,16 @@ client.connect();
    * If status code is 0, text contains computation result
    * Otherwise, text contains error message
 
+```java
+// Send text:
+client.sendTextMessage('text!');
+
+// Send expression and get the response
+var response = client.sendExpressionMessage('some expression');
+System.out.println(response.getStatus());
+System.out.println(response.getText());
+```
+
 ### Disconnections
 
 ```java
@@ -45,6 +53,11 @@ client.close();
 ```
 
 This call sends shutdown request and closes the socket.
+
+
+## Exception handling
+The listed methods have the potential to throw `IOException` and, sometimes, `RuntimeException`.
+More specific information can be found in the methods' Javadoc.
 
 
 ## Tests
@@ -61,11 +74,14 @@ These tests require python server to already be working. **_It won't pass if ser
  * Run the server: `python -m python-server` (in background or separate terminal)
  * Run the test: `./gradlew :test --tests TestWithPythonServer`
 
-These tests expect certain behaviour from the server, so if you are implementing your server
-you need to edit the test to suit your implementation.
+These tests are designed to expect specific behavior from the server.
+Therefore, if you are implementing your own server,
+you may need to modify the tests to align with your implementation.
+This could involve adapting the test cases to suit the expected behavior of your server.
 
 
 ## Build the library
 
-`./gradlew :jar`
- * or `./gradlew :build` if you want to run the tests
+Run: 
+ * `./gradlew :jar` or
+ * `./gradlew :build` if you want to run tests
