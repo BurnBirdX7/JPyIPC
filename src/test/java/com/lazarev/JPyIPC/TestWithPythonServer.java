@@ -18,6 +18,7 @@ public class TestWithPythonServer {
         assertDoesNotThrow(() -> client.sendTextMessage("Hello"));
         assertDoesNotThrow(() -> client.sendTextMessage("Hello again!"));
         assertDoesNotThrow(() -> client.sendTextMessage("die"));
+        assertDoesNotThrow(client::close);
     }
 
     @Test
@@ -28,11 +29,12 @@ public class TestWithPythonServer {
 
         assertDoesNotThrow(client::connect);
         assertDoesNotThrow(() ->
-                assertEquals(DEFAULT_RESPONSE, client.sendExpressionMessage("Hello!!").getText()));
+                assertEquals(DEFAULT_RESPONSE, client.sendExpressionMessage("Expression!!").getText()));
         assertDoesNotThrow(() ->
-                assertEquals(DEFAULT_RESPONSE, client.sendExpressionMessage("Hello again!!").getText()));
+                assertEquals(DEFAULT_RESPONSE, client.sendExpressionMessage("Expression again!!").getText()));
         assertDoesNotThrow(() ->
-                assertEquals(DEFAULT_RESPONSE, client.sendExpressionMessage("die").getText()));
+                assertEquals(DEFAULT_RESPONSE, client.sendExpressionMessage("Expression 3").getText()));
+        assertDoesNotThrow(client::close);
     }
 
 }

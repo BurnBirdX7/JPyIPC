@@ -34,3 +34,9 @@ Empty message **are** allowed
 | [0, 2³²) bytes | bytes... | byte array | _Response_, UTF-8 encoded answer computation result or error message |
 
 Sender (Java) derives response type from ID.
+
+## Shutting down the connection
+
+
+Silent socket shutting down works if Python side can process it correctly.
+Also, shutdown request can be sent (send package with type `K`)

@@ -79,7 +79,8 @@ public class BasicClient {
      *
      * @param expression - expression to send to Python to compute
      * @return object that contains results of the computation
-     * @throws IOException on socket error,
+     * @throws IOException on socket error
+     * @throws RuntimeException on id mismatch in request and response
      */
     public ExpressionResponse sendExpressionMessage(String expression) throws IOException {
         var requestPacket = new RequestPacket('E', lastId++, expression);
@@ -94,13 +95,28 @@ public class BasicClient {
         return responsePacket;
     }
 
+    /**
+     * Sends shutdown request and closes the socket
+     * @throws IOException thrown if error occurred during request or socket couldn't be close
+     */
     public void close() throws IOException {
+        var killRequest = new RequestPacket('K', lastId, "");
+        killRequest.writeToStream(socket.getOutputStream());
+        var killResponse = ResponsePacket.readFromStream(socket.getInputStream());
         socket.close();
+
+        if (!killResponse.ok()) {
+            throw new RuntimeException(
+                    "Strange response to a kill request, status code: %d, text: \"%s\""
+                            .formatted(killResponse.status, killResponse.text)
+            );
+        }
     }
 
     /**
      * class RequestPacket
      * represents J2Py - Request Packet
+     * <p>
      * Can be created with constructor or read from stream
      * <p>
      * Possibility of reading from stream was added to make testing easier
@@ -149,6 +165,8 @@ public class BasicClient {
     /**
      * class ResponsePacket
      * represents Py2J - Response Packet
+     * <p>
+     * Can be created with constructor or read from stream
      * <p>
      * Possibility of creating a packet with constructor and writing it to a stream
      * was added to make testing easier

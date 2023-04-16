@@ -15,7 +15,11 @@ public class TestWithJavaServer {
 
     private static ServerSocket serverSocket;
     private static Thread serverThread;
-    private final static String DEFAULT_RESPONSE = ClientRunnable.DEFAULT_RESPONSE;
+    private final static String DEFAULT_RESPONSE = ClientConnection.DEFAULT_RESPONSE;
+
+    private final static int SOCKET = 25566;
+    private final static String HOST = "127.0.0.1";
+
     private static void listen() {
 
         try {
@@ -23,7 +27,7 @@ public class TestWithJavaServer {
             int num = 0;
 
             while (!serverSocket.isClosed()) {
-                var runnable = new ClientRunnable(serverSocket.accept());
+                var runnable = new ClientConnection(serverSocket.accept());
                 System.out.println("Accepted connection");
 
                 new Thread(runnable, "ClientThread-" + num).start();
@@ -31,14 +35,13 @@ public class TestWithJavaServer {
             }
 
         } catch (IOException e) {
-            System.out.println("Server down");
-            System.out.println(e.getMessage());
+            System.out.println("Server down, reason: " + e.getMessage());
         }
     }
 
     @BeforeAll
     public static void setupServer() throws IOException {
-        serverSocket = new ServerSocket(25565);
+        serverSocket = new ServerSocket(SOCKET);
         serverThread = new Thread(TestWithJavaServer::listen);
         serverThread.start();
     }
@@ -53,17 +56,18 @@ public class TestWithJavaServer {
 
     @Test
     public void testText() {
-        var client = new BasicClient();
+        var client = new BasicClient(HOST, SOCKET);
 
         assertDoesNotThrow(client::connect);
         assertDoesNotThrow(() -> client.sendTextMessage("Hello!!"));
         assertDoesNotThrow(() -> client.sendTextMessage("Hello again!!"));
         assertDoesNotThrow(() -> client.sendTextMessage("die"));
+        assertDoesNotThrow(client::close);
     }
 
     @Test
     public void testExpression() {
-        var client = new BasicClient();
+        var client = new BasicClient(HOST, SOCKET);
 
         assertDoesNotThrow(client::connect);
         assertDoesNotThrow(() ->
@@ -72,19 +76,20 @@ public class TestWithJavaServer {
                 assertEquals(DEFAULT_RESPONSE, client.sendExpressionMessage("Hello again!!").getText()));
         assertDoesNotThrow(() ->
                 assertEquals(DEFAULT_RESPONSE, client.sendExpressionMessage("die").getText()));
+        assertDoesNotThrow(client::close);
     }
 }
 
 
 /**
- * Simple class that incapsulate
+ * Simple class that implements functionality of a thread that communicates with Client
  */
-class ClientRunnable implements Runnable {
+class ClientConnection implements Runnable {
     private final Socket socket;
 
     final static String DEFAULT_RESPONSE = "garbage";
 
-    ClientRunnable(Socket socket) {
+    ClientConnection(Socket socket) {
         this.socket = socket;
     }
 
@@ -106,7 +111,7 @@ class ClientRunnable implements Runnable {
             boolean run = true;
             while (run) {
                 var request = BasicClient.RequestPacket.readFromStream(input);
-                if (request.text.equals("die")) {
+                if (request.type == 'K') {
                     run = false;
                 }
 
