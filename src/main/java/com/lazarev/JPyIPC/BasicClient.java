@@ -48,6 +48,8 @@ public class BasicClient {
     }
 
     /**
+     * Send MESSAGE of type 'Text' to Python process
+     * Client must be connected.
      *
      * @param text - text to send to Python process
      * @throws IOException on socket errors
@@ -72,6 +74,9 @@ public class BasicClient {
     }
 
     /**
+     * Sends MESSAGE of type 'Expression' to Python process
+     * Client must be connected
+     *
      * @param expression - expression to send to Python to compute
      * @return object that contains results of the computation
      * @throws IOException on socket error,
@@ -89,10 +94,23 @@ public class BasicClient {
         return responsePacket;
     }
 
-    private static class RequestPacket {
+    public void close() throws IOException {
+        socket.close();
+    }
+
+    /**
+     * class RequestPacket
+     * represents J2Py - Request Packet
+     * Can be created with constructor or read from stream
+     * <p>
+     * Possibility of reading from stream was added to make testing easier
+     */
+    static class RequestPacket {
         byte type;
         int id;
         String text;
+
+        private RequestPacket() {}
 
         RequestPacket(char type, int id, String text) {
             this.type = (byte)type;
@@ -100,22 +118,53 @@ public class BasicClient {
             this.text = text;
         }
 
+
         void writeToStream(OutputStream stream) throws IOException {
             var dataStream = new DataOutputStream(stream);
+            var bytes = text.getBytes(StandardCharsets.UTF_8);
+
             dataStream.writeByte(type);
             dataStream.writeInt(id);
-
-            var bytes = text.getBytes(StandardCharsets.UTF_8);
             dataStream.writeInt(bytes.length);
             dataStream.write(bytes);
+
             dataStream.flush();
+        }
+
+        static RequestPacket readFromStream(InputStream stream) throws IOException {
+            var dataStream = new DataInputStream(stream);
+            var packet = new RequestPacket();
+
+            packet.type = dataStream.readByte();
+            packet.id = dataStream.readInt();
+            int length = dataStream.readInt();
+            byte[] encoded = dataStream.readNBytes(length);
+
+            packet.text = new String(encoded, StandardCharsets.UTF_8);
+            return packet;
         }
     }
 
-    private static class ResponsePacket implements ExpressionResponse {
+
+    /**
+     * class ResponsePacket
+     * represents Py2J - Response Packet
+     * <p>
+     * Possibility of creating a packet with constructor and writing it to a stream
+     * was added to make testing easier
+     */
+    static class ResponsePacket implements ExpressionResponse {
         int id;
         int status;
         String text;
+
+        private ResponsePacket() {}
+
+        ResponsePacket(int id, int status, String text) {
+            this.id = id;
+            this.status = status;
+            this.text = text;
+        }
 
         @Override
         public String getText() {
@@ -131,11 +180,22 @@ public class BasicClient {
             return status == 0;
         }
 
+        void writeToStream(OutputStream stream) throws IOException {
+            var dataStream = new DataOutputStream(stream);
+            dataStream.writeInt(id);
+            dataStream.writeByte(status);
+
+            var bytes = text.getBytes(StandardCharsets.UTF_8);
+            dataStream.writeInt(bytes.length);
+            dataStream.write(bytes);
+            dataStream.flush();
+        }
+
         static ResponsePacket readFromStream(InputStream stream) throws IOException {
             var dataStream = new DataInputStream(stream);
             var packet = new ResponsePacket();
             packet.id = dataStream.readInt();
-            packet.status = dataStream.readInt();
+            packet.status = dataStream.readByte();
 
             int length = dataStream.readInt();
             byte[] encoded = dataStream.readNBytes(length);
